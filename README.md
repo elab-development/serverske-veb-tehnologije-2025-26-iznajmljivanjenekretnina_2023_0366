@@ -1,59 +1,381 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Real Estate API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel 12 API backend za aplikaciju za nekretnine. Projekat pokriva registraciju i prijavu korisnika, role korisnika, kategorije nekretnina, nekretnine, upite za zakazivanje pregleda, javne eksterne API pozive, CSV eksport upita i Swagger dokumentaciju.
 
-## About Laravel
+## Tehnologije
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2+
+- Laravel 12
+- Laravel Sanctum
+- MySQL
+- Pest/PHPUnit testovi
+- darkaonline/l5-swagger
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Povlacenje projekta
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Kloniraj repozitorijum i udji u folder projekta:
 
-## Learning Laravel
+```bash
+git clone <repository-url>
+cd real_estate
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+Instaliraj PHP zavisnosti:
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+```bash
+composer install
+```
 
-## Laravel Sponsors
+Ako zelis da koristis Vite/Laravel frontend alatke koje dolaze uz Laravel skeleton:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+```bash
+npm install
+```
 
-### Premium Partners
+## Podesavanje lokalnog okruzenja
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+Kopiraj `.env.example` u `.env`:
 
-## Contributing
+```bash
+cp .env.example .env
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Na Windows PowerShell-u mozes koristiti:
 
-## Code of Conduct
+```powershell
+Copy-Item .env.example .env
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Generisi aplikacioni kljuc:
 
-## Security Vulnerabilities
+```bash
+php artisan key:generate
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+U `.env` podesi konekciju ka lokalnoj MySQL bazi. Podrazumevano je:
 
-## License
+```env
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=real_estate
+DB_USERNAME=root
+DB_PASSWORD=
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Pre migracija napravi bazu `real_estate` u MySQL-u.
+
+## Migracije i seed podaci
+
+Pokreni migracije:
+
+```bash
+php artisan migrate
+```
+
+Popuni bazu pocetnim podacima:
+
+```bash
+php artisan db:seed
+```
+
+Ili sve odjednom za svezu lokalnu bazu:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+Seeder kreira admin korisnika, nekoliko obicnih korisnika, realne kategorije, realne nekretnine i upite, a zatim dodaje jos podataka kroz factory-je.
+
+Seed korisnici imaju lozinku:
+
+```text
+password
+```
+
+Primer admin naloga:
+
+```text
+admin@realestate.com
+```
+
+## Pokretanje aplikacije
+
+Pokreni Laravel server:
+
+```bash
+php artisan serve
+```
+
+Aplikacija ce biti dostupna na:
+
+```text
+http://127.0.0.1:8000
+```
+
+Ako je port 8000 zauzet drugim projektom, koristi drugi port:
+
+```bash
+php artisan serve --port=8001
+```
+
+API rute su pod `/api`, na primer:
+
+```text
+http://127.0.0.1:8000/api/properties
+```
+
+## Swagger dokumentacija
+
+Projekat koristi `darkaonline/l5-swagger`.
+
+Generisi OpenAPI dokumentaciju:
+
+```bash
+php artisan l5-swagger:generate
+```
+
+Swagger UI se otvara na:
+
+```text
+http://127.0.0.1:8000/api/documentation
+```
+
+Raw OpenAPI JSON je dostupan na:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+Za autorizovane rute prvo pozovi `/api/login` ili `/api/register`, kopiraj `access_token`, pa u Swagger UI klikni `Authorize` i unesi token u formatu:
+
+```text
+Bearer <token>
+```
+
+## Testovi
+
+Pokretanje svih testova:
+
+```bash
+php artisan test
+```
+
+## Glavne funkcionalnosti
+
+### Autentifikacija
+
+- Registracija korisnika
+- Login korisnika
+- Logout korisnika
+- Sanctum Bearer token autentifikacija
+- Role korisnika: `admin`, `user`
+
+Registracija uvek kreira obicnog korisnika sa rolom `user`. Admin korisnik se kreira kroz seeder.
+
+### Kategorije
+
+- Javni pregled svih kategorija
+- Javni pregled jedne kategorije
+- Javni pregled nekretnina po kategoriji
+- Kreiranje, azuriranje i brisanje kategorija samo za admin korisnika
+- Nema dodatnih filtera, pretrage, sortiranja ni paginacije
+
+Kategorija ima naziv i opis.
+
+### Nekretnine
+
+- Javni pregled nekretnina
+- Javni pregled jedne nekretnine
+- Javni pregled lokacije nekretnine preko eksternog geocoding API-ja
+- Javni pregled vremenske prognoze za lokaciju nekretnine
+- Kreiranje, azuriranje i brisanje nekretnina samo za admin korisnika
+- Pregled liste podrzava pretragu, filtere, sortiranje i paginaciju
+- Nekretnina pripada jednoj kategoriji
+- Nekretnina nema vezu ka korisniku koji ju je kreirao
+
+Tipovi oglasa:
+
+```text
+sale
+rent
+```
+
+Statusi nekretnine:
+
+```text
+draft
+active
+archived
+```
+
+Podrzani filteri za listu nekretnina:
+
+```text
+search
+category_id
+listing_type
+status
+city
+min_price
+max_price
+min_area
+max_area
+sort_by
+sort_direction
+per_page
+page
+```
+
+Podrzana polja za sortiranje:
+
+```text
+title
+price
+area
+city
+listing_type
+status
+published_at
+created_at
+updated_at
+```
+
+### Upiti za pregled nekretnine
+
+Upit moze da kreira samo ulogovani korisnik sa rolom `user`. Admin ne kreira upite, vec ih pregleda i azurira.
+
+- Korisnik vidi samo svoje upite
+- Admin vidi sve upite
+- Admin moze da filtrira upite po nekretnini
+- Admin moze da azurira samo `status` i `admin_note`
+- Korisnik moze da kreira upit za konkretnu nekretninu
+- Pregled jednog upita i brisanje upita nisu predvidjeni
+- Jedan korisnik moze imati samo jedan upit sa istim statusom za istu nekretninu
+
+Statusi upita:
+
+```text
+new
+contacted
+scheduled
+cancelled
+closed
+```
+
+Podrzani filteri za listu upita:
+
+```text
+property_id
+```
+
+### Javni eksterni API-jevi
+
+Projekat ima javne rute koje ne zahtevaju autentifikaciju i pozivaju eksterne API servise bez API kljuca.
+
+Geocoding:
+
+```text
+GET /api/external/geocode
+GET /api/properties/{property}/location
+```
+
+Ruta poziva Nominatim / OpenStreetMap API. Podrzani query parametri za direktan geocoding:
+
+```text
+address
+limit
+```
+
+Primer:
+
+```text
+/api/external/geocode?address=Skerliceva%2012,%20Beograd&limit=1
+```
+
+Vremenska prognoza:
+
+```text
+GET /api/external/weather
+GET /api/properties/{property}/weather
+```
+
+Ruta poziva Open-Meteo API. Podrzani query parametri za direktnu prognozu:
+
+```text
+latitude
+longitude
+forecast_days
+timezone
+```
+
+Primer:
+
+```text
+/api/external/weather?latitude=44.8125&longitude=20.4612&forecast_days=7
+```
+
+### CSV eksport
+
+Ruta:
+
+```text
+GET /api/inquiries/export
+```
+
+Preuzima CSV fajl sa podacima o upitima. CSV sadrzi korisnika, nekretninu, kategoriju, status, poruku, telefon, zeljeni datum i vreme, admin napomenu i datume kreiranja/azuriranja.
+
+Eksport postuje prava pristupa:
+
+- Admin eksportuje sve upite
+- Obican korisnik eksportuje samo svoje upite
+
+Podrzani filteri:
+
+```text
+property_id
+status
+```
+
+## Pregled glavnih ruta
+
+```text
+POST      /api/register
+POST      /api/login
+POST      /api/logout
+
+GET       /api/external/geocode
+GET       /api/external/weather
+
+GET       /api/categories
+POST      /api/categories
+GET       /api/categories/{category}
+PUT/PATCH /api/categories/{category}
+DELETE    /api/categories/{category}
+GET       /api/categories/{category}/properties
+
+GET       /api/properties
+POST      /api/properties
+GET       /api/properties/{property}
+PUT/PATCH /api/properties/{property}
+DELETE    /api/properties/{property}
+GET       /api/properties/{property}/location
+GET       /api/properties/{property}/weather
+GET       /api/properties/{property}/inquiries
+
+GET       /api/inquiries
+POST      /api/inquiries
+PUT/PATCH /api/inquiries/{inquiry}
+GET       /api/inquiries/export
+```
+
+## Korisne komande
+
+```bash
+composer install
+php artisan key:generate
+php artisan migrate:fresh --seed
+php artisan l5-swagger:generate
+php artisan serve
+php artisan test
+```
