@@ -12,12 +12,11 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
+        User::factory()->admin()->create([
             'name' => 'Admin User',
             'email' => 'admin@realestate.com',
-            'role' => User::ROLE_ADMIN,
         ]);
 
-        User::factory(10)->create();
+        User::factory(10)->user()->create();
     }
 }
