@@ -43,6 +43,9 @@ Route::apiResource('properties', PropertyController::class)->only([
     'destroy',
 ])->middleware('auth:sanctum');
 
+Route::get('/inquiries/export', [InquiryController::class, 'exportCsv'])
+    ->middleware('auth:sanctum');
+
 Route::apiResource('inquiries', InquiryController::class)->only([
     'index',
     'store',

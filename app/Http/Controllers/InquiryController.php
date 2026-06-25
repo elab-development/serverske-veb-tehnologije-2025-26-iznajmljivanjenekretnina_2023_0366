@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class InquiryController extends Controller
 {
@@ -72,6 +73,86 @@ class InquiryController extends Controller
             'count' => $inquiries->count(),
             'property_id' => $property->id,
             'inquiries' => InquiryResource::collection($inquiries),
+        ]);
+    }
+    public function exportCsv(Request $request): JsonResponse|StreamedResponse
+    {
+        $validated = $request->validate([
+            'property_id' => ['sometimes', 'integer', 'exists:properties,id'],
+            'status' => ['sometimes', Rule::in(self::STATUSES)],
+        ]);
+
+        $user = $request->user();
+
+        $query = Inquiry::query()
+            ->with(['user', 'property.category']);
+
+        if ($user->role !== User::ROLE_ADMIN) {
+            $query->where('user_id', $user->id);
+        }
+
+        if (isset($validated['property_id'])) {
+            $query->where('property_id', $validated['property_id']);
+        }
+
+        if (isset($validated['status'])) {
+            $query->where('status', $validated['status']);
+        }
+
+        $filename = 'inquiries-' . now()->format('Y-m-d-H-i-s') . '.csv';
+
+        return response()->streamDownload(function () use ($query): void {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, [
+                'id',
+                'user_id',
+                'user_name',
+                'user_email',
+                'property_id',
+                'property_title',
+                'property_city',
+                'property_address',
+                'category',
+                'status',
+                'message',
+                'phone',
+                'preferred_date',
+                'preferred_time',
+                'admin_note',
+                'created_at',
+                'updated_at',
+            ]);
+
+            $query
+                ->orderBy('created_at')
+                ->chunk(200, function ($inquiries) use ($handle): void {
+                    foreach ($inquiries as $inquiry) {
+                        fputcsv($handle, [
+                            $inquiry->id,
+                            $inquiry->user_id,
+                            $inquiry->user?->name,
+                            $inquiry->user?->email,
+                            $inquiry->property_id,
+                            $inquiry->property?->title,
+                            $inquiry->property?->city,
+                            $inquiry->property?->address,
+                            $inquiry->property?->category?->name,
+                            $inquiry->status,
+                            $inquiry->message,
+                            $inquiry->phone,
+                            $inquiry->preferred_date?->toDateString(),
+                            $inquiry->preferred_time,
+                            $inquiry->admin_note,
+                            $inquiry->created_at?->toDateTimeString(),
+                            $inquiry->updated_at?->toDateTimeString(),
+                        ]);
+                    }
+                });
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }
 
