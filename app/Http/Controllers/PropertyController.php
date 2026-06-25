@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Resources\PropertyResource;
+use App\Models\Category;
 use App\Models\Property;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
@@ -134,6 +135,102 @@ class PropertyController extends Controller
                 'min_area',
                 'max_area',
             ]),
+            'properties' => PropertyResource::collection($properties->getCollection()),
+        ]);
+    }
+    /**
+     * Display properties for the specified category.
+     */
+    public function byCategory(Request $request, Category $category): JsonResponse
+    {
+        $validated = $request->validate([
+            'search' => ['sometimes', 'string', 'max:255'],
+            'listing_type' => ['sometimes', Rule::in(self::LISTING_TYPES)],
+            'status' => ['sometimes', Rule::in(self::STATUSES)],
+            'city' => ['sometimes', 'string', 'max:255'],
+            'min_price' => ['sometimes', 'numeric', 'min:0'],
+            'max_price' => ['sometimes', 'numeric', 'min:0', 'gte:min_price'],
+            'min_area' => ['sometimes', 'numeric', 'min:0'],
+            'max_area' => ['sometimes', 'numeric', 'min:0', 'gte:min_area'],
+            'sort_by' => ['sometimes', Rule::in(self::SORTABLE_FIELDS)],
+            'sort_direction' => ['sometimes', Rule::in(['asc', 'desc'])],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:50'],
+            'page' => ['sometimes', 'integer', 'min:1'],
+        ]);
+
+        $sortBy = $validated['sort_by'] ?? 'created_at';
+        $sortDirection = $validated['sort_direction'] ?? 'desc';
+        $perPage = (int) ($validated['per_page'] ?? 10);
+
+        $query = Property::query()
+            ->with('category')
+            ->where('category_id', $category->id);
+
+        if (! empty($validated['search'])) {
+            $search = $validated['search'];
+
+            $query->where(function ($query) use ($search): void {
+                $query->where('title', 'like', "%{$search}%")
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhere('city', 'like', "%{$search}%")
+                    ->orWhere('address', 'like', "%{$search}%");
+            });
+        }
+
+        if (isset($validated['listing_type'])) {
+            $query->where('listing_type', $validated['listing_type']);
+        }
+
+        if (isset($validated['status'])) {
+            $query->where('status', $validated['status']);
+        }
+
+        if (! empty($validated['city'])) {
+            $query->where('city', 'like', "%{$validated['city']}%");
+        }
+
+        if (isset($validated['min_price'])) {
+            $query->where('price', '>=', $validated['min_price']);
+        }
+
+        if (isset($validated['max_price'])) {
+            $query->where('price', '<=', $validated['max_price']);
+        }
+
+        if (isset($validated['min_area'])) {
+            $query->where('area', '>=', $validated['min_area']);
+        }
+
+        if (isset($validated['max_area'])) {
+            $query->where('area', '<=', $validated['max_area']);
+        }
+
+        $properties = $query
+            ->orderBy($sortBy, $sortDirection)
+            ->paginate($perPage)
+            ->withQueryString();
+
+        return response()->json([
+            'count' => $properties->count(),
+            'total' => $properties->total(),
+            'per_page' => $properties->perPage(),
+            'current_page' => $properties->currentPage(),
+            'last_page' => $properties->lastPage(),
+            'sort' => [
+                'by' => $sortBy,
+                'direction' => $sortDirection,
+            ],
+            'filters' => $request->only([
+                'search',
+                'listing_type',
+                'status',
+                'city',
+                'min_price',
+                'max_price',
+                'min_area',
+                'max_area',
+            ]),
+            'category_id' => $category->id,
             'properties' => PropertyResource::collection($properties->getCollection()),
         ]);
     }

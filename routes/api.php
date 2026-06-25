@@ -24,6 +24,8 @@ Route::apiResource('categories', CategoryController::class)->only([
     'destroy',
 ])->middleware('auth:sanctum');
 
+Route::get('/categories/{category}/properties', [PropertyController::class, 'byCategory']);
+
 Route::apiResource('properties', PropertyController::class)->only([
     'index',
     'show',
@@ -40,3 +42,6 @@ Route::apiResource('inquiries', InquiryController::class)->only([
     'store',
     'update',
 ])->middleware('auth:sanctum');
+
+Route::get('/properties/{property}/inquiries', [InquiryController::class, 'byProperty'])
+    ->middleware('auth:sanctum');

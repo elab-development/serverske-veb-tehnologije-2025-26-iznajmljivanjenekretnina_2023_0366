@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\InquiryResource;
 use App\Models\Inquiry;
+use App\Models\Property;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,6 +47,30 @@ class InquiryController extends Controller
 
         return response()->json([
             'count' => $inquiries->count(),
+            'inquiries' => InquiryResource::collection($inquiries),
+        ]);
+    }
+    /**
+     * Display inquiries for the specified property.
+     */
+    public function byProperty(Request $request, Property $property): JsonResponse
+    {
+        $user = $request->user();
+
+        $query = Inquiry::query()
+            ->with(['user', 'property.category'])
+            ->where('property_id', $property->id)
+            ->latest();
+
+        if ($user->role !== User::ROLE_ADMIN) {
+            $query->where('user_id', $user->id);
+        }
+
+        $inquiries = $query->get();
+
+        return response()->json([
+            'count' => $inquiries->count(),
+            'property_id' => $property->id,
             'inquiries' => InquiryResource::collection($inquiries),
         ]);
     }
